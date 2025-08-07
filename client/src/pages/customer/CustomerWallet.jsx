@@ -9,6 +9,7 @@ import {
   ArrowDownIcon,
   CalendarIcon,
 } from "@heroicons/react/24/outline";
+import { formatDateShort } from "../../utils/dateUtils";
 
 const CustomerWallet = () => {
   const [profile, setProfile] = useState(null);
@@ -334,17 +335,7 @@ const CustomerWallet = () => {
                         </div>
                         <div className="text-sm text-gray-600 flex items-center space-x-1">
                           <CalendarIcon className="h-4 w-4" />
-                          <span>
-                            {new Date(
-                              transaction.created_at
-                            ).toLocaleDateString("en-IN", {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </span>
+                          <span>{formatDateShort(transaction.created_at)}</span>
                         </div>
                       </div>
                     </div>

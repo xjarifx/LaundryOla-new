@@ -18,6 +18,7 @@ import {
   validateName,
   validateAddress,
 } from "../../utils/validation";
+import { formatDateShort } from "../../utils/dateUtils";
 
 const CustomerProfile = () => {
   const [profile, setProfile] = useState(null);
@@ -530,11 +531,8 @@ const CustomerProfile = () => {
                     <div className="flex justify-between text-sm">
                       <span className="text-green-700">Last Order:</span>
                       <span className="font-medium text-green-900">
-                        {profile?.last_order_date
-                          ? new Date(
-                              profile.last_order_date
-                            ).toLocaleDateString("en-IN")
-                          : "No orders yet"}
+                        {formatDateShort(profile?.last_order_date) ||
+                          "No orders yet"}
                       </span>
                     </div>
                   </div>

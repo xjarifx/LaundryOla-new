@@ -13,6 +13,7 @@ import {
   ClipboardDocumentListIcon,
   UserIcon,
 } from "@heroicons/react/24/outline";
+import { formatDateShort } from "../../utils/dateUtils";
 
 const CustomerDashboard = () => {
   const [profile, setProfile] = useState(null);
@@ -313,7 +314,7 @@ const CustomerDashboard = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(order.created_at).toLocaleDateString()}
+                        {formatDateShort(order.order_datetime)}
                       </td>
                     </tr>
                   ))

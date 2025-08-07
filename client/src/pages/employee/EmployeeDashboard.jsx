@@ -11,6 +11,7 @@ import {
   BanknotesIcon,
   CalendarIcon,
 } from "@heroicons/react/24/outline";
+import { formatDateShort } from "../../utils/dateUtils";
 
 const EmployeeDashboard = () => {
   const [profile, setProfile] = useState(null);
@@ -397,12 +398,7 @@ const EmployeeDashboard = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {order.formatted_date ||
-                        (order.order_datetime &&
-                          new Date(
-                            order.order_datetime
-                          ).toLocaleDateString()) ||
-                        "Unknown date"}
+                      {formatDateShort(order.order_datetime) || "Unknown date"}
                     </td>
                   </tr>
                 ))}

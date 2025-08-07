@@ -11,6 +11,7 @@ import {
   UserIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/outline";
+import { formatDateShort } from "../../utils/dateUtils";
 
 const EmployeeOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -290,13 +291,7 @@ const EmployeeOrders = () => {
                       ₹{order.total_amount}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {new Date(order.created_at).toLocaleDateString("en-IN", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {formatDateShort(order.order_datetime)}
                     </div>
                   </div>
                 </div>

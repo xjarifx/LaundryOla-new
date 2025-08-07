@@ -9,6 +9,7 @@ import {
   CheckCircleIcon,
   XCircleIcon,
 } from "@heroicons/react/24/outline";
+import { formatDateShort, formatDateTime } from "../../utils/dateUtils";
 
 const CustomerOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -211,13 +212,7 @@ const CustomerOrders = () => {
                       ₹{order.total_amount}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {new Date(order.created_at).toLocaleDateString("en-IN", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {formatDateShort(order.order_datetime)}
                     </div>
                   </div>
                 </div>
@@ -257,30 +252,9 @@ const CustomerOrders = () => {
                       <div className="flex items-center space-x-2">
                         <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
                         <span className="text-gray-600">
-                          Ordered:{" "}
-                          {new Date(order.created_at).toLocaleString("en-IN")}
+                          Ordered: {formatDateTime(order.order_datetime)}
                         </span>
                       </div>
-                      {order.updated_at &&
-                        order.updated_at !== order.created_at && (
-                          <div className="flex items-center space-x-2">
-                            <div
-                              className={`w-2 h-2 rounded-full ${
-                                order.status === "Completed"
-                                  ? "bg-green-600"
-                                  : order.status === "Rejected"
-                                  ? "bg-red-600"
-                                  : "bg-yellow-600"
-                              }`}
-                            ></div>
-                            <span className="text-gray-600">
-                              Updated:{" "}
-                              {new Date(order.updated_at).toLocaleString(
-                                "en-IN"
-                              )}
-                            </span>
-                          </div>
-                        )}
                       {order.employee_name && (
                         <div className="flex items-center space-x-2">
                           <div className="w-2 h-2 bg-green-600 rounded-full"></div>
