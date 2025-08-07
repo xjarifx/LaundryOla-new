@@ -30,15 +30,17 @@ const CustomerWallet = () => {
       ]);
 
       console.log("Profile API response:", profileRes.data);
-      const profileData = profileRes.data.data || profileRes.data.customer || profileRes.data;
+      const profileData =
+        profileRes.data.data || profileRes.data.customer || profileRes.data;
       console.log("Processed profile data:", profileData);
-      
+
       setProfile(profileData);
-      
+
       console.log("Transactions API response:", transactionsRes.data);
-      const transactionsData = transactionsRes.data.data || transactionsRes.data.transactions || [];
+      const transactionsData =
+        transactionsRes.data.data || transactionsRes.data.transactions || [];
       console.log("Processed transactions data:", transactionsData);
-      
+
       setTransactions(transactionsData);
     } catch (error) {
       console.error("Error fetching wallet data:", error);
