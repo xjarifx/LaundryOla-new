@@ -32,14 +32,27 @@ exports.getDashboard = async (req, res) => {
 };
 
 exports.updateProfile = async (req, res) => {
-  const { name, phone, address } = req.body;
+  const { name, phone, email, address } = req.body;
   try {
+    // Update customer profile with email
     const [result] = await db.query(
-      "CALL sp_update_customer_profile(?, ?, ?, ?)",
-      [req.user.id, name, phone, address]
+      "UPDATE Customers SET name = ?, phone = ?, email = ?, address = ? WHERE customer_id = ?",
+      [name, phone, email, address, req.user.id]
     );
-    res.json(success(result[0][0], "Profile updated successfully"));
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json(error("Customer not found"));
+    }
+
+    // Fetch updated profile
+    const [updatedProfile] = await db.query(
+      "SELECT customer_id, name, phone, email, address, wallet_balance FROM Customers WHERE customer_id = ?",
+      [req.user.id]
+    );
+
+    res.json(success(updatedProfile[0], "Profile updated successfully"));
   } catch (err) {
+    console.error("Profile update error:", err);
     res.status(400).json(error(err.message));
   }
 };

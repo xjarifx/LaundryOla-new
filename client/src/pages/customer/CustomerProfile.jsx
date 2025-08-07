@@ -12,12 +12,19 @@ import {
   ClipboardDocumentListIcon,
   CalendarIcon,
 } from "@heroicons/react/24/outline";
+import {
+  validateEmail,
+  validatePhone,
+  validateName,
+  validateAddress,
+} from "../../utils/validation";
 
 const CustomerProfile = () => {
   const [profile, setProfile] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [updateLoading, setUpdateLoading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({});
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -32,8 +39,18 @@ const CustomerProfile = () => {
   const fetchProfile = async () => {
     try {
       const response = await axios.get("/customers/profile");
-      const profileData = response.data.customer;
+      console.log("Profile response:", response.data); // Debug log
+
+      // Fix: Backend returns { success: true, data: profileData }
+      const profileData = response.data.data;
+
+      if (!profileData) {
+        console.error("No profile data received from server");
+        return;
+      }
+
       setProfile(profileData);
+      // Pre-populate form data when profile is fetched
       setFormData({
         name: profileData.name || "",
         phone: profileData.phone || "",
@@ -42,6 +59,11 @@ const CustomerProfile = () => {
       });
     } catch (error) {
       console.error("Error fetching profile:", error);
+      // Better error handling
+      if (error.response?.status === 401) {
+        // Redirect to login if unauthorized
+        window.location.href = "/login";
+      }
     } finally {
       setLoading(false);
     }
@@ -51,34 +73,110 @@ const CustomerProfile = () => {
     e.preventDefault();
     setUpdateLoading(true);
 
+    // Validate form data
+    const errors = {};
+    const nameError = validateName(formData.name);
+    if (nameError) errors.name = nameError;
+
+    const emailError = validateEmail(formData.email);
+    if (emailError) errors.email = emailError;
+
+    const phoneError = validatePhone(formData.phone);
+    if (phoneError) errors.phone = phoneError;
+
+    const addressError = validateAddress(formData.address);
+    if (addressError) errors.address = addressError;
+
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      setUpdateLoading(false);
+      return;
+    }
+
     try {
-      await axios.put("/customers/profile", formData);
+      const response = await axios.put("/customers/profile", formData);
+      console.log("Update response:", response.data); // Debug log
 
       // Refresh profile data
-      fetchProfile();
+      await fetchProfile();
       setEditMode(false);
-      alert("Profile updated successfully!");
+      setValidationErrors({});
+
+      // Better success message
+      const successMessage =
+        response.data?.message || "Profile updated successfully!";
+      alert(successMessage);
     } catch (error) {
-      alert(error.response?.data?.message || "Failed to update profile");
+      console.error("Profile update error:", error);
+      console.error("Error response:", error.response?.data); // More detailed error logging
+
+      const errorMessage =
+        error.response?.data?.message || "Failed to update profile";
+      alert(`Error: ${errorMessage}`);
+
+      // Handle validation errors from server
+      if (error.response?.data?.details) {
+        const serverErrors = {};
+        error.response.data.details.forEach((detail) => {
+          const field = detail.path?.[0];
+          if (field) {
+            serverErrors[field] = detail.message;
+          }
+        });
+        setValidationErrors(serverErrors);
+      }
     } finally {
       setUpdateLoading(false);
     }
   };
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
+    });
+
+    // Real-time validation
+    setValidationErrors((prev) => {
+      const newErrors = { ...prev };
+
+      switch (name) {
+        case "name":
+          const nameError = validateName(value);
+          if (nameError) newErrors.name = nameError;
+          else delete newErrors.name;
+          break;
+        case "email":
+          const emailError = validateEmail(value);
+          if (emailError) newErrors.email = emailError;
+          else delete newErrors.email;
+          break;
+        case "phone":
+          const phoneError = validatePhone(value);
+          if (phoneError) newErrors.phone = phoneError;
+          else delete newErrors.phone;
+          break;
+        case "address":
+          const addressError = validateAddress(value);
+          if (addressError) newErrors.address = addressError;
+          else delete newErrors.address;
+          break;
+      }
+
+      return newErrors;
     });
   };
 
   const cancelEdit = () => {
+    // Reset form data to original profile data
     setFormData({
-      name: profile.name || "",
-      phone: profile.phone || "",
-      email: profile.email || "",
-      address: profile.address || "",
+      name: profile?.name || "",
+      phone: profile?.phone || "",
+      email: profile?.email || "",
+      address: profile?.address || "",
     });
+    setValidationErrors({}); // Clear validation errors
     setEditMode(false);
   };
 
@@ -115,7 +213,16 @@ const CustomerProfile = () => {
 
               {!editMode && (
                 <button
-                  onClick={() => setEditMode(true)}
+                  onClick={() => {
+                    // Ensure form data is fresh when entering edit mode
+                    setFormData({
+                      name: profile?.name || "",
+                      phone: profile?.phone || "",
+                      email: profile?.email || "",
+                      address: profile?.address || "",
+                    });
+                    setEditMode(true);
+                  }}
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 mx-auto"
                 >
                   <PencilIcon className="h-4 w-4" />
@@ -184,8 +291,20 @@ const CustomerProfile = () => {
                       required
                       value={formData.name}
                       onChange={handleChange}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      className={`block w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none ${
+                        validationErrors.name
+                          ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                          : formData.name && !validationErrors.name
+                          ? "border-green-300 focus:ring-green-500 focus:border-green-500"
+                          : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                      }`}
+                      placeholder="Enter your full name"
                     />
+                    {validationErrors.name && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {validationErrors.name}
+                      </p>
+                    )}
                   </div>
 
                   {/* Email */}
@@ -203,8 +322,20 @@ const CustomerProfile = () => {
                       required
                       value={formData.email}
                       onChange={handleChange}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      className={`block w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none ${
+                        validationErrors.email
+                          ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                          : formData.email && !validationErrors.email
+                          ? "border-green-300 focus:ring-green-500 focus:border-green-500"
+                          : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                      }`}
+                      placeholder="Enter your email (example: user@domain.com)"
                     />
+                    {validationErrors.email && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {validationErrors.email}
+                      </p>
+                    )}
                   </div>
 
                   {/* Phone */}
@@ -222,8 +353,20 @@ const CustomerProfile = () => {
                       required
                       value={formData.phone}
                       onChange={handleChange}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      className={`block w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none ${
+                        validationErrors.phone
+                          ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                          : formData.phone && !validationErrors.phone
+                          ? "border-green-300 focus:ring-green-500 focus:border-green-500"
+                          : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                      }`}
+                      placeholder="Enter phone number (digits only, 10-15 characters)"
                     />
+                    {validationErrors.phone && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {validationErrors.phone}
+                      </p>
+                    )}
                   </div>
 
                   {/* Address */}
@@ -241,8 +384,20 @@ const CustomerProfile = () => {
                       required
                       value={formData.address}
                       onChange={handleChange}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      className={`block w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none ${
+                        validationErrors.address
+                          ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                          : formData.address && !validationErrors.address
+                          ? "border-green-300 focus:ring-green-500 focus:border-green-500"
+                          : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                      }`}
+                      placeholder="Enter your complete address"
                     />
+                    {validationErrors.address && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {validationErrors.address}
+                      </p>
+                    )}
                   </div>
 
                   <div className="flex justify-end">

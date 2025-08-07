@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import axios from "axios";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
+import { validateLogin, validateEmail } from "../../utils/validation";
 
 const Login = ({ setUser }) => {
   const [formData, setFormData] = useState({
@@ -12,12 +13,22 @@ const Login = ({ setUser }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [validationErrors, setValidationErrors] = useState({});
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
+
+    // Client-side validation
+    const errors = validateLogin(formData);
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      setError("Please fix the validation errors below");
+      setLoading(false);
+      return;
+    }
 
     try {
       const endpoint = `/auth/${formData.userType}s/login`;
@@ -66,6 +77,8 @@ const Login = ({ setUser }) => {
         // Update user state
         setUser(userWithRole);
 
+        setValidationErrors({});
+
         // Redirect based on user type
         const redirectPath =
           userWithRole.role === "CUSTOMER"
@@ -74,19 +87,55 @@ const Login = ({ setUser }) => {
         navigate(redirectPath);
       }
     } catch (error) {
-      setError(
-        error.response?.data?.message || "Login failed. Please try again."
-      );
+      const errorMessage =
+        error.response?.data?.message || "Login failed. Please try again.";
+      setError(errorMessage);
+
+      // Handle server validation errors
+      if (error.response?.data?.details) {
+        const serverErrors = {};
+        error.response.data.details.forEach((detail) => {
+          const field = detail.path?.[0];
+          if (field) {
+            serverErrors[field] = detail.message;
+          }
+        });
+        setValidationErrors(serverErrors);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
+
+    // Real-time validation
+    if (name === "email") {
+      setValidationErrors((prev) => {
+        const newErrors = { ...prev };
+        const emailError = validateEmail(value);
+        if (emailError) newErrors.email = emailError;
+        else delete newErrors.email;
+        return newErrors;
+      });
+    }
+
+    if (name === "password") {
+      setValidationErrors((prev) => {
+        const newErrors = { ...prev };
+        if (!value) {
+          newErrors.password = "Password is required";
+        } else {
+          delete newErrors.password;
+        }
+        return newErrors;
+      });
+    }
   };
 
   return (
@@ -157,9 +206,20 @@ const Login = ({ setUser }) => {
                 required
                 value={formData.email}
                 onChange={handleChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter your email"
+                className={`mt-1 block w-full px-3 py-2 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none ${
+                  validationErrors.email
+                    ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                    : formData.email && !validationErrors.email
+                    ? "border-green-300 focus:ring-green-500 focus:border-green-500"
+                    : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                }`}
+                placeholder="Enter your email (example: user@domain.com)"
               />
+              {validationErrors.email && (
+                <p className="mt-1 text-sm text-red-600" id="email-error">
+                  {validationErrors.email}
+                </p>
+              )}
             </div>
 
             {/* Password */}
@@ -178,7 +238,13 @@ const Login = ({ setUser }) => {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className={`block w-full px-3 py-2 pr-10 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none ${
+                    validationErrors.password
+                      ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                      : formData.password && !validationErrors.password
+                      ? "border-green-300 focus:ring-green-500 focus:border-green-500"
+                      : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                  }`}
                   placeholder="Enter your password"
                 />
                 <button
@@ -193,6 +259,11 @@ const Login = ({ setUser }) => {
                   )}
                 </button>
               </div>
+              {validationErrors.password && (
+                <p className="mt-1 text-sm text-red-600" id="password-error">
+                  {validationErrors.password}
+                </p>
+              )}
             </div>
           </div>
 

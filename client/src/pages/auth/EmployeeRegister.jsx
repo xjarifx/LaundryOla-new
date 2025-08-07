@@ -2,6 +2,14 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import axios from "axios";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
+import {
+  validateEmployeeRegistration,
+  validateEmail,
+  validatePhone,
+  validateName,
+  validatePassword,
+  getInputValidationProps,
+} from "../../utils/validation";
 
 const EmployeeRegister = () => {
   const [formData, setFormData] = useState({
@@ -16,6 +24,7 @@ const EmployeeRegister = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [validationErrors, setValidationErrors] = useState({});
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -24,16 +33,11 @@ const EmployeeRegister = () => {
     setError("");
     setSuccess("");
 
-    // Validate passwords match
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
-      setLoading(false);
-      return;
-    }
-
-    // Validate password strength
-    if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters long");
+    // Client-side validation
+    const errors = validateEmployeeRegistration(formData);
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      setError("Please fix the validation errors below");
       setLoading(false);
       return;
     }
@@ -48,24 +52,86 @@ const EmployeeRegister = () => {
 
       if (response.data.success) {
         setSuccess("Registration successful! Please login to continue.");
+        setValidationErrors({});
         setTimeout(() => {
           navigate("/login");
         }, 2000);
       }
     } catch (error) {
-      setError(
+      const errorMessage =
         error.response?.data?.message ||
-          "Registration failed. Please try again."
-      );
+        "Registration failed. Please try again.";
+      setError(errorMessage);
+
+      // Handle server validation errors
+      if (error.response?.data?.details) {
+        const serverErrors = {};
+        error.response.data.details.forEach((detail) => {
+          const field = detail.path?.[0];
+          if (field) {
+            serverErrors[field] = detail.message;
+          }
+        });
+        setValidationErrors(serverErrors);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
+    });
+
+    // Real-time validation
+    setValidationErrors((prev) => {
+      const newErrors = { ...prev };
+
+      // Clear the error for this field if it becomes valid
+      switch (name) {
+        case "name":
+          const nameError = validateName(value);
+          if (nameError) newErrors.name = nameError;
+          else delete newErrors.name;
+          break;
+        case "email":
+          const emailError = validateEmail(value);
+          if (emailError) newErrors.email = emailError;
+          else delete newErrors.email;
+          break;
+        case "phone":
+          const phoneError = validatePhone(value);
+          if (phoneError) newErrors.phone = phoneError;
+          else delete newErrors.phone;
+          break;
+        case "password":
+          const passwordError = validatePassword(value);
+          if (passwordError) newErrors.password = passwordError;
+          else delete newErrors.password;
+
+          // Also check confirm password if it exists
+          if (formData.confirmPassword && value !== formData.confirmPassword) {
+            newErrors.confirmPassword = "Passwords do not match";
+          } else if (
+            formData.confirmPassword &&
+            value === formData.confirmPassword
+          ) {
+            delete newErrors.confirmPassword;
+          }
+          break;
+        case "confirmPassword":
+          if (value !== formData.password) {
+            newErrors.confirmPassword = "Passwords do not match";
+          } else {
+            delete newErrors.confirmPassword;
+          }
+          break;
+      }
+
+      return newErrors;
     });
   };
 
@@ -115,9 +181,20 @@ const EmployeeRegister = () => {
                 required
                 value={formData.name}
                 onChange={handleChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                className={`mt-1 block w-full px-3 py-2 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none ${
+                  validationErrors.name
+                    ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                    : formData.name && !validationErrors.name
+                    ? "border-green-300 focus:ring-green-500 focus:border-green-500"
+                    : "border-gray-300 focus:ring-green-500 focus:border-green-500"
+                }`}
                 placeholder="Enter your full name"
               />
+              {validationErrors.name && (
+                <p className="mt-1 text-sm text-red-600" id="name-error">
+                  {validationErrors.name}
+                </p>
+              )}
             </div>
 
             {/* Email */}
@@ -135,9 +212,20 @@ const EmployeeRegister = () => {
                 required
                 value={formData.email}
                 onChange={handleChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500"
-                placeholder="Enter your email"
+                className={`mt-1 block w-full px-3 py-2 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none ${
+                  validationErrors.email
+                    ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                    : formData.email && !validationErrors.email
+                    ? "border-green-300 focus:ring-green-500 focus:border-green-500"
+                    : "border-gray-300 focus:ring-green-500 focus:border-green-500"
+                }`}
+                placeholder="Enter your email (example: user@domain.com)"
               />
+              {validationErrors.email && (
+                <p className="mt-1 text-sm text-red-600" id="email-error">
+                  {validationErrors.email}
+                </p>
+              )}
             </div>
 
             {/* Phone */}
@@ -155,9 +243,20 @@ const EmployeeRegister = () => {
                 required
                 value={formData.phone}
                 onChange={handleChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500"
-                placeholder="Enter your phone number"
+                className={`mt-1 block w-full px-3 py-2 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none ${
+                  validationErrors.phone
+                    ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                    : formData.phone && !validationErrors.phone
+                    ? "border-green-300 focus:ring-green-500 focus:border-green-500"
+                    : "border-gray-300 focus:ring-green-500 focus:border-green-500"
+                }`}
+                placeholder="Enter phone number (digits only, 10-15 characters)"
               />
+              {validationErrors.phone && (
+                <p className="mt-1 text-sm text-red-600" id="phone-error">
+                  {validationErrors.phone}
+                </p>
+              )}
             </div>
 
             {/* Password */}
@@ -176,8 +275,14 @@ const EmployeeRegister = () => {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500"
-                  placeholder="Create a password (min 6 characters)"
+                  className={`block w-full px-3 py-2 pr-10 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none ${
+                    validationErrors.password
+                      ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                      : formData.password && !validationErrors.password
+                      ? "border-green-300 focus:ring-green-500 focus:border-green-500"
+                      : "border-gray-300 focus:ring-green-500 focus:border-green-500"
+                  }`}
+                  placeholder="Create a password (min 8 characters)"
                 />
                 <button
                   type="button"
@@ -191,6 +296,11 @@ const EmployeeRegister = () => {
                   )}
                 </button>
               </div>
+              {validationErrors.password && (
+                <p className="mt-1 text-sm text-red-600" id="password-error">
+                  {validationErrors.password}
+                </p>
+              )}
             </div>
 
             {/* Confirm Password */}
@@ -209,7 +319,15 @@ const EmployeeRegister = () => {
                   required
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                  className={`block w-full px-3 py-2 pr-10 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none ${
+                    validationErrors.confirmPassword
+                      ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                      : formData.confirmPassword &&
+                        !validationErrors.confirmPassword &&
+                        formData.password === formData.confirmPassword
+                      ? "border-green-300 focus:ring-green-500 focus:border-green-500"
+                      : "border-gray-300 focus:ring-green-500 focus:border-green-500"
+                  }`}
                   placeholder="Confirm your password"
                 />
                 <button
@@ -224,6 +342,14 @@ const EmployeeRegister = () => {
                   )}
                 </button>
               </div>
+              {validationErrors.confirmPassword && (
+                <p
+                  className="mt-1 text-sm text-red-600"
+                  id="confirmPassword-error"
+                >
+                  {validationErrors.confirmPassword}
+                </p>
+              )}
             </div>
           </div>
 

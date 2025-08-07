@@ -24,7 +24,7 @@ router.put(
   "/profile",
   authenticateToken,
   requireCustomer,
-  validate(customerValidator.register),
+  validate(customerValidator.updateProfile),
   customerController.updateProfile
 );
 router.post(
