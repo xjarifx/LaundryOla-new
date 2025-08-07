@@ -17,12 +17,33 @@ exports.placeOrder = async (req, res) => {
 
 exports.getPending = async (req, res) => {
   try {
-    const [result] = await db.query(
-      'SELECT * FROM view_all_orders WHERE status = "Pending" ORDER BY order_date ASC'
+    console.log("[GET /api/orders/pending] Checking database connection...");
+    await db.query("SELECT 1"); // Test connection
+
+    console.log("[GET /api/orders/pending] Checking if view exists...");
+    const [views] = await db.query(
+      "SELECT TABLE_NAME FROM information_schema.views WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'view_all_orders'"
     );
-    res.json(success(result));
+
+    if (views.length === 0) {
+      throw new Error("view_all_orders does not exist in the database");
+    }
+
+    console.log("[GET /api/orders/pending] Querying pending orders...");
+    const [result] = await db.query(
+      "SELECT * FROM view_all_orders WHERE status = ?",
+      ["Pending"]
+    );
+
+    console.log(
+      "[GET /api/orders/pending] Query result:",
+      Array.isArray(result) ? `Found ${result.length} orders` : "No results"
+    );
+
+    res.json(success(result || []));
   } catch (err) {
-    res.status(500).json(error(err.message));
+    console.error("[GET /api/orders/pending] Error:", err);
+    res.status(500).json(error(err.message || "Database error"));
   }
 };
 

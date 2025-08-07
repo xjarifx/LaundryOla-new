@@ -29,6 +29,6 @@ router.put(
   requireEmployee,
   orderController.manageOrder
 );
-router.get(":id", authenticateToken, orderController.getOne);
+router.get("/:id", authenticateToken, orderController.getOne);
 
 module.exports = router;
