@@ -17,6 +17,23 @@ exports.getDashboard = async (req, res) => {
   }
 };
 
+exports.getProfile = async (req, res) => {
+  try {
+    const [result] = await db.query(
+      "SELECT employee_id, name, phone, email, earnings_balance FROM Employees WHERE employee_id = ?",
+      [req.user.id]
+    );
+
+    if (result.length === 0) {
+      return res.status(404).json(error("Employee not found"));
+    }
+
+    res.json(success(result[0]));
+  } catch (err) {
+    res.status(500).json(error(err.message));
+  }
+};
+
 exports.getOrders = async (req, res) => {
   try {
     // Get orders assigned to this employee from the Orders table

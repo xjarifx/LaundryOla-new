@@ -12,12 +12,18 @@ import {
   CheckCircleIcon,
   CalendarIcon,
 } from "@heroicons/react/24/outline";
+import {
+  validateEmail,
+  validatePhone,
+  validateName,
+} from "../../utils/validation";
 
 const EmployeeProfile = () => {
   const [profile, setProfile] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [updateLoading, setUpdateLoading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({});
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -30,29 +36,28 @@ const EmployeeProfile = () => {
 
   const fetchProfile = async () => {
     try {
-      const response = await axios.get("/employees/dashboard");
-      const dashboardData = response.data.dashboard;
-      const userData = response.data.user; // Employee user data should be included
+      const response = await axios.get("/employees/profile");
+      console.log("Employee profile response:", response.data); // Debug log
 
-      // Use user data for profile information
-      const profileData = {
-        name: userData?.name || "",
-        phone: userData?.phone || "",
-        email: userData?.email || "",
-        earnings_balance: dashboardData?.totalEarnings || 0,
-        total_orders_handled: dashboardData?.totalOrders || 0,
-        completed_orders: dashboardData?.completedOrders || 0,
-        in_progress_orders: dashboardData?.pendingOrders || 0,
-      };
+      // Backend returns { success: true, data: profileData }
+      const profileData = response.data.data;
+
+      if (!profileData) {
+        console.error("No employee profile data received from server");
+        return;
+      }
 
       setProfile(profileData);
       setFormData({
-        name: profileData.name,
-        phone: profileData.phone,
-        email: profileData.email,
+        name: profileData.name || "",
+        phone: profileData.phone || "",
+        email: profileData.email || "",
       });
     } catch (error) {
-      console.error("Error fetching profile:", error);
+      console.error("Error fetching employee profile:", error);
+      if (error.response?.status === 404) {
+        console.error("Employee profile endpoint not found");
+      }
     } finally {
       setLoading(false);
     }
@@ -62,33 +67,100 @@ const EmployeeProfile = () => {
     e.preventDefault();
     setUpdateLoading(true);
 
+    // Validate form data
+    const errors = {};
+    const nameError = validateName(formData.name);
+    if (nameError) errors.name = nameError;
+
+    const emailError = validateEmail(formData.email);
+    if (emailError) errors.email = emailError;
+
+    const phoneError = validatePhone(formData.phone);
+    if (phoneError) errors.phone = phoneError;
+
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      setUpdateLoading(false);
+      return;
+    }
+
     try {
-      await axios.put("/users/profile", formData);
+      console.log("Updating employee profile with data:", formData); // Debug log
+      const response = await axios.put("/employees/profile", formData);
+      console.log("Update response:", response.data); // Debug log
 
       // Refresh profile data
-      fetchProfile();
+      await fetchProfile();
       setEditMode(false);
-      alert("Profile updated successfully!");
+      setValidationErrors({});
+
+      // Success message
+      const message = response.data?.message || "Profile updated successfully!";
+      alert(message);
     } catch (error) {
-      alert(error.response?.data?.message || "Failed to update profile");
+      console.error("Profile update error:", error);
+
+      // Show specific error message
+      const message =
+        error.response?.data?.message || "Failed to update profile";
+      alert(message);
+
+      // Handle validation errors from server
+      if (error.response?.data?.errors) {
+        setValidationErrors(error.response.data.errors);
+      }
     } finally {
       setUpdateLoading(false);
     }
   };
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
+
+    // Real-time validation
+    const errors = { ...validationErrors };
+
+    switch (name) {
+      case "name":
+        const nameError = validateName(value);
+        if (nameError) {
+          errors.name = nameError;
+        } else {
+          delete errors.name;
+        }
+        break;
+      case "email":
+        const emailError = validateEmail(value);
+        if (emailError) {
+          errors.email = emailError;
+        } else {
+          delete errors.email;
+        }
+        break;
+      case "phone":
+        const phoneError = validatePhone(value);
+        if (phoneError) {
+          errors.phone = phoneError;
+        } else {
+          delete errors.phone;
+        }
+        break;
+    }
+
+    setValidationErrors(errors);
   };
 
   const cancelEdit = () => {
     setFormData({
-      name: profile.name || "",
-      phone: profile.phone || "",
-      email: profile.email || "",
+      name: profile?.name || "",
+      phone: profile?.phone || "",
+      email: profile?.email || "",
     });
+    setValidationErrors({});
     setEditMode(false);
   };
 
@@ -261,8 +333,20 @@ const EmployeeProfile = () => {
                       required
                       value={formData.name}
                       onChange={handleChange}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      className={`block w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none ${
+                        validationErrors.name
+                          ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                          : formData.name && !validationErrors.name
+                          ? "border-green-300 focus:ring-green-500 focus:border-green-500"
+                          : "border-gray-300 focus:ring-green-500 focus:border-green-500"
+                      }`}
+                      placeholder="Enter your full name"
                     />
+                    {validationErrors.name && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {validationErrors.name}
+                      </p>
+                    )}
                   </div>
 
                   {/* Email */}
@@ -280,8 +364,20 @@ const EmployeeProfile = () => {
                       required
                       value={formData.email}
                       onChange={handleChange}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      className={`block w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none ${
+                        validationErrors.email
+                          ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                          : formData.email && !validationErrors.email
+                          ? "border-green-300 focus:ring-green-500 focus:border-green-500"
+                          : "border-gray-300 focus:ring-green-500 focus:border-green-500"
+                      }`}
+                      placeholder="Enter your email (example: user@domain.com)"
                     />
+                    {validationErrors.email && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {validationErrors.email}
+                      </p>
+                    )}
                   </div>
 
                   {/* Phone */}
@@ -299,8 +395,20 @@ const EmployeeProfile = () => {
                       required
                       value={formData.phone}
                       onChange={handleChange}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      className={`block w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none ${
+                        validationErrors.phone
+                          ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                          : formData.phone && !validationErrors.phone
+                          ? "border-green-300 focus:ring-green-500 focus:border-green-500"
+                          : "border-gray-300 focus:ring-green-500 focus:border-green-500"
+                      }`}
+                      placeholder="Enter phone number (digits only, 10-15 characters)"
                     />
+                    {validationErrors.phone && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {validationErrors.phone}
+                      </p>
+                    )}
                   </div>
 
                   <div className="flex justify-end">

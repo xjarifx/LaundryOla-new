@@ -15,6 +15,12 @@ router.get(
   employeeController.getDashboard
 );
 router.get(
+  "/profile",
+  authenticateToken,
+  requireEmployee,
+  employeeController.getProfile
+);
+router.get(
   "/orders",
   authenticateToken,
   requireEmployee,
