@@ -29,8 +29,17 @@ const CustomerWallet = () => {
         axios.get("/customers/transactions"),
       ]);
 
-      setProfile(profileRes.data.data);
-      setTransactions(transactionsRes.data.data || []);
+      console.log("Profile API response:", profileRes.data);
+      const profileData = profileRes.data.data || profileRes.data.customer || profileRes.data;
+      console.log("Processed profile data:", profileData);
+      
+      setProfile(profileData);
+      
+      console.log("Transactions API response:", transactionsRes.data);
+      const transactionsData = transactionsRes.data.data || transactionsRes.data.transactions || [];
+      console.log("Processed transactions data:", transactionsData);
+      
+      setTransactions(transactionsData);
     } catch (error) {
       console.error("Error fetching wallet data:", error);
     } finally {
@@ -165,39 +174,6 @@ const CustomerWallet = () => {
         <p className="text-gray-600">
           Manage your wallet balance and view transaction history
         </p>
-      </div>
-
-      {/* Debug Section - Remove this after fixing */}
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
-        <h3 className="text-red-800 font-bold mb-2">Debug Information</h3>
-        <div className="space-y-1 text-sm text-red-700">
-          <p>Token: {localStorage.getItem("token") ? "Present" : "Missing"}</p>
-          <p>User Data: {localStorage.getItem("user") || "Not found"}</p>
-          <div className="mt-2">
-            <p>Raw Token:</p>
-            <code className="bg-red-100 p-1 rounded break-all text-xs block">
-              {localStorage.getItem("token") || "No token"}
-            </code>
-          </div>
-          {localStorage.getItem("token") && (
-            <div className="mt-2">
-              <p>Token Payload:</p>
-              <pre className="bg-red-100 p-2 rounded text-xs overflow-auto max-h-20">
-                {JSON.stringify(
-                  decodeJWTPayload(localStorage.getItem("token")),
-                  null,
-                  2
-                )}
-              </pre>
-            </div>
-          )}
-        </div>
-        <button
-          onClick={clearAuthAndReload}
-          className="mt-2 bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
-        >
-          Clear Auth & Reload
-        </button>
       </div>
 
       {/* Wallet Balance Card */}
@@ -381,7 +357,7 @@ const CustomerWallet = () => {
                         transaction.type === "DEPOSIT"
                           ? "+"
                           : "-"}
-                        ₹{transaction.amount}
+                        ₹{Math.abs(parseFloat(transaction.amount)).toFixed(2)}
                       </div>
                       {transaction.order_id && (
                         <div className="text-sm text-gray-500">
