@@ -29,12 +29,38 @@ const CustomerWallet = () => {
         axios.get("/customers/transactions"),
       ]);
 
-      setProfile(profileRes.data.customer);
-      setTransactions(transactionsRes.data.transactions);
+      setProfile(profileRes.data.data);
+      setTransactions(transactionsRes.data.data || []);
     } catch (error) {
       console.error("Error fetching wallet data:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const clearAuthAndReload = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    delete axios.defaults.headers.common["Authorization"];
+    window.location.href = "/login";
+  };
+
+  const decodeJWTPayload = (token) => {
+    try {
+      const base64Url = token.split(".")[1];
+      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split("")
+          .map(function (c) {
+            return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+          })
+          .join("")
+      );
+      return JSON.parse(jsonPayload);
+    } catch (error) {
+      console.error("Error decoding JWT:", error);
+      return null;
     }
   };
 
@@ -49,9 +75,34 @@ const CustomerWallet = () => {
         return;
       }
 
-      await axios.post("/customers/wallet/add", {
-        amount: parsedAmount,
-      });
+      // Debug: Check if token exists
+      const token = localStorage.getItem("token");
+      const userData = localStorage.getItem("user");
+      console.log("Token exists:", !!token);
+      console.log("Token type:", typeof token);
+      console.log("Token value:", token);
+      console.log("User data:", userData);
+      console.log(
+        "Token preview:",
+        token && typeof token === "string"
+          ? token.substring(0, 20) + "..."
+          : "Invalid token"
+      );
+
+      const response = await axios.post(
+        "/customers/wallet/add",
+        {
+          amount: parsedAmount,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("Add money response:", response.data);
 
       // Refresh wallet data
       fetchWalletData();
@@ -59,7 +110,14 @@ const CustomerWallet = () => {
       setShowAddMoney(false);
       alert("Money added successfully!");
     } catch (error) {
-      alert(error.response?.data?.message || "Failed to add money");
+      console.error("Add money error:", error.response?.data || error.message);
+      const errorMessage =
+        error.response?.data?.message || "Failed to add money";
+      if (error.response?.status === 401) {
+        alert("Your session has expired. Please login again.");
+      } else {
+        alert(errorMessage);
+      }
     } finally {
       setAddMoneyLoading(false);
     }
@@ -107,6 +165,39 @@ const CustomerWallet = () => {
         <p className="text-gray-600">
           Manage your wallet balance and view transaction history
         </p>
+      </div>
+
+      {/* Debug Section - Remove this after fixing */}
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
+        <h3 className="text-red-800 font-bold mb-2">Debug Information</h3>
+        <div className="space-y-1 text-sm text-red-700">
+          <p>Token: {localStorage.getItem("token") ? "Present" : "Missing"}</p>
+          <p>User Data: {localStorage.getItem("user") || "Not found"}</p>
+          <div className="mt-2">
+            <p>Raw Token:</p>
+            <code className="bg-red-100 p-1 rounded break-all text-xs block">
+              {localStorage.getItem("token") || "No token"}
+            </code>
+          </div>
+          {localStorage.getItem("token") && (
+            <div className="mt-2">
+              <p>Token Payload:</p>
+              <pre className="bg-red-100 p-2 rounded text-xs overflow-auto max-h-20">
+                {JSON.stringify(
+                  decodeJWTPayload(localStorage.getItem("token")),
+                  null,
+                  2
+                )}
+              </pre>
+            </div>
+          )}
+        </div>
+        <button
+          onClick={clearAuthAndReload}
+          className="mt-2 bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+        >
+          Clear Auth & Reload
+        </button>
       </div>
 
       {/* Wallet Balance Card */}
@@ -226,7 +317,7 @@ const CustomerWallet = () => {
           </p>
         </div>
 
-        {transactions.length === 0 ? (
+        {transactions && transactions.length === 0 ? (
           <div className="text-center py-12">
             <WalletIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -238,75 +329,75 @@ const CustomerWallet = () => {
           </div>
         ) : (
           <div className="divide-y divide-gray-200">
-            {transactions.map((transaction) => (
-              <div
-                key={transaction.transaction_id}
-                className="p-6 hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div
-                      className={`p-2 rounded-full ${
-                        transaction.type === "CREDIT" ||
-                        transaction.type === "DEPOSIT"
-                          ? "bg-green-100"
-                          : "bg-red-100"
-                      }`}
-                    >
-                      {getTransactionIcon(transaction.type)}
-                    </div>
-                    <div>
-                      <div className="font-medium text-gray-900">
-                        {transaction.type === "CREDIT" ||
-                        transaction.type === "DEPOSIT"
-                          ? "Money Added"
-                          : "Order Payment"}
+            {transactions &&
+              transactions.map((transaction) => (
+                <div
+                  key={transaction.transaction_id}
+                  className="p-6 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div
+                        className={`p-2 rounded-full ${
+                          transaction.type === "CREDIT" ||
+                          transaction.type === "DEPOSIT"
+                            ? "bg-green-100"
+                            : "bg-red-100"
+                        }`}
+                      >
+                        {getTransactionIcon(transaction.type)}
                       </div>
-                      <div className="text-sm text-gray-600 flex items-center space-x-1">
-                        <CalendarIcon className="h-4 w-4" />
-                        <span>
-                          {new Date(transaction.created_at).toLocaleDateString(
-                            "en-IN",
-                            {
+                      <div>
+                        <div className="font-medium text-gray-900">
+                          {transaction.type === "CREDIT" ||
+                          transaction.type === "DEPOSIT"
+                            ? "Money Added"
+                            : "Order Payment"}
+                        </div>
+                        <div className="text-sm text-gray-600 flex items-center space-x-1">
+                          <CalendarIcon className="h-4 w-4" />
+                          <span>
+                            {new Date(
+                              transaction.created_at
+                            ).toLocaleDateString("en-IN", {
                               day: "numeric",
                               month: "short",
                               year: "numeric",
                               hour: "2-digit",
                               minute: "2-digit",
-                            }
-                          )}
-                        </span>
+                            })}
+                          </span>
+                        </div>
                       </div>
+                    </div>
+
+                    <div className="text-right">
+                      <div
+                        className={`text-lg font-bold ${getTransactionColor(
+                          transaction.type
+                        )}`}
+                      >
+                        {transaction.type === "CREDIT" ||
+                        transaction.type === "DEPOSIT"
+                          ? "+"
+                          : "-"}
+                        ₹{transaction.amount}
+                      </div>
+                      {transaction.order_id && (
+                        <div className="text-sm text-gray-500">
+                          Order #{transaction.order_id}
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  <div className="text-right">
-                    <div
-                      className={`text-lg font-bold ${getTransactionColor(
-                        transaction.type
-                      )}`}
-                    >
-                      {transaction.type === "CREDIT" ||
-                      transaction.type === "DEPOSIT"
-                        ? "+"
-                        : "-"}
-                      ₹{transaction.amount}
+                  {transaction.description && (
+                    <div className="mt-3 ml-12 text-sm text-gray-600">
+                      {transaction.description}
                     </div>
-                    {transaction.order_id && (
-                      <div className="text-sm text-gray-500">
-                        Order #{transaction.order_id}
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </div>
-
-                {transaction.description && (
-                  <div className="mt-3 ml-12 text-sm text-gray-600">
-                    {transaction.description}
-                  </div>
-                )}
-              </div>
-            ))}
+              ))}
           </div>
         )}
       </div>

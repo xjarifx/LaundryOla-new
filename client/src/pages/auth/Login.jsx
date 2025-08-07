@@ -27,24 +27,41 @@ const Login = ({ setUser }) => {
       });
 
       if (response.data.success) {
-        const { token } = response.data;
+        console.log("Login response:", response.data); // Debug log
+
+        // The actual data is nested inside response.data.data
+        const responseData = response.data.data;
+        const { token } = responseData;
         const userData =
           formData.userType === "customer"
-            ? response.data.customer
-            : response.data.employee;
+            ? responseData.customer
+            : responseData.employee;
 
-        // Store token and user data
-        localStorage.setItem("token", token);
-        localStorage.setItem("user", JSON.stringify(userData));
+        console.log("Extracted token:", token); // Debug log
+        console.log("Extracted userData:", userData); // Debug log
 
-        // Set axios default header
-        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+        if (!token) {
+          setError("No authentication token received from server");
+          return;
+        }
+
+        if (!userData) {
+          setError("No user data received from server");
+          return;
+        }
 
         // Add role to user data for navigation
         const userWithRole = {
           ...userData,
           role: formData.userType.toUpperCase(),
         };
+
+        // Store token and user data WITH role
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(userWithRole));
+
+        // Set axios default header
+        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
         // Update user state
         setUser(userWithRole);

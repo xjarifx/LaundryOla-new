@@ -22,9 +22,11 @@ const CustomerOrders = () => {
   const fetchOrders = async () => {
     try {
       const response = await axios.get("/customers/orders");
-      setOrders(response.data.orders);
+      console.log("Customer orders response:", response.data);
+      setOrders(response.data.data || []);
     } catch (error) {
       console.error("Error fetching orders:", error);
+      setOrders([]);
     } finally {
       setLoading(false);
     }

@@ -29,10 +29,16 @@ const EmployeeOrders = () => {
         axios.get("/orders/pending"),
       ]);
 
-      setOrders(assignedRes.data.orders);
-      setPendingOrders(pendingRes.data.pendingOrders);
+      console.log("Assigned orders response:", assignedRes.data);
+      console.log("Pending orders response:", pendingRes.data);
+
+      setOrders(assignedRes.data.data || []);
+      setPendingOrders(pendingRes.data.data || []);
     } catch (error) {
       console.error("Error fetching orders:", error);
+      // Set empty arrays on error to prevent iteration issues
+      setOrders([]);
+      setPendingOrders([]);
     } finally {
       setLoading(false);
     }
@@ -84,12 +90,43 @@ const EmployeeOrders = () => {
     }
   };
 
-  // Combine pending and assigned orders for filtering
-  const allOrders = [...pendingOrders, ...orders];
+  // Combine pending and assigned orders for filtering, removing duplicates
+  const allOrdersMap = new Map();
+
+  // Add assigned orders first
+  (orders || []).forEach((order) => {
+    allOrdersMap.set(order.order_id, { ...order, source: "assigned" });
+  });
+
+  // Add pending orders, but don't overwrite assigned ones
+  (pendingOrders || []).forEach((order) => {
+    if (!allOrdersMap.has(order.order_id)) {
+      allOrdersMap.set(order.order_id, { ...order, source: "pending" });
+    }
+  });
+
+  const allOrders = Array.from(allOrdersMap.values());
+
+  console.log("Deduplicated orders:", allOrders.length);
+  console.log("Original assigned:", orders?.length || 0);
+  console.log("Original pending:", pendingOrders?.length || 0);
+
   const filteredOrders = allOrders.filter((order) => {
     if (filter === "all") return true;
     return order.status.toLowerCase() === filter.toLowerCase();
   });
+
+  // Calculate stats from deduplicated data
+  const pendingCount = allOrders.filter(
+    (order) => order.status === "Pending"
+  ).length;
+  const acceptedCount = allOrders.filter(
+    (order) => order.status === "Accepted"
+  ).length;
+  const completedCount = allOrders.filter(
+    (order) => order.status === "Completed"
+  ).length;
+  const totalCount = allOrders.length;
 
   if (loading) {
     return (
@@ -121,7 +158,7 @@ const EmployeeOrders = () => {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Pending</p>
               <p className="text-2xl font-bold text-gray-900">
-                {pendingOrders.length}
+                {pendingOrders?.length || 0}
               </p>
             </div>
           </div>
@@ -135,7 +172,7 @@ const EmployeeOrders = () => {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">In Progress</p>
               <p className="text-2xl font-bold text-gray-900">
-                {orders.filter((o) => o.status === "Accepted").length}
+                {acceptedCount}
               </p>
             </div>
           </div>
@@ -149,7 +186,7 @@ const EmployeeOrders = () => {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Completed</p>
               <p className="text-2xl font-bold text-gray-900">
-                {orders.filter((o) => o.status === "Completed").length}
+                {completedCount}
               </p>
             </div>
           </div>
@@ -166,9 +203,13 @@ const EmployeeOrders = () => {
               </p>
               <p className="text-2xl font-bold text-gray-900">
                 ₹
-                {orders
+                {allOrders
                   .filter((o) => o.status === "Completed")
-                  .reduce((sum, order) => sum + order.total_amount, 0)}
+                  .reduce(
+                    (sum, order) => sum + parseFloat(order.total_amount || 0),
+                    0
+                  )
+                  .toFixed(2)}
               </p>
             </div>
           </div>
@@ -220,7 +261,9 @@ const EmployeeOrders = () => {
           <div className="divide-y divide-gray-200">
             {filteredOrders.map((order) => (
               <div
-                key={`${order.order_id}-${order.status}`}
+                key={`${order.order_id}-${order.status}-${
+                  order.source || "default"
+                }`}
                 className="p-6 hover:bg-gray-50 transition-colors"
               >
                 <div className="flex items-center justify-between mb-4">

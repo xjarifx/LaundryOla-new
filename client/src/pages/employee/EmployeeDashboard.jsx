@@ -24,24 +24,32 @@ const EmployeeDashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const [dashboardRes, pendingRes, ordersRes] = await Promise.all([
+      const [dashboardRes, ordersRes] = await Promise.all([
         axios.get("/employees/dashboard"),
-        axios.get("/orders/pending"),
         axios.get("/employees/orders"),
       ]);
 
-      // Extract profile data from dashboard response and create a profile-like structure
-      const dashboardData = dashboardRes.data.dashboard;
+      console.log("Dashboard response:", dashboardRes.data);
+      console.log("Orders response:", ordersRes.data);
+
+      // Extract employee stats from the dashboard response
+      const employeeStats = dashboardRes.data.employee_stats;
+      const pendingOrdersData = dashboardRes.data.pending_orders || [];
+      const currentWork = dashboardRes.data.current_work || [];
+
+      // Create profile data from employee stats
       const profileData = {
-        earnings_balance: dashboardData.totalEarnings || 0,
-        total_orders_handled: dashboardData.totalOrders || 0,
-        completed_orders: dashboardData.completedOrders || 0,
-        in_progress_orders: dashboardData.pendingOrders || 0,
+        name: employeeStats?.name,
+        earnings_balance: employeeStats?.earnings_balance || 0,
+        formatted_earnings: employeeStats?.formatted_earnings,
+        total_orders_handled: employeeStats?.total_orders_handled || 0,
+        completed_orders: employeeStats?.completed_orders || 0,
+        in_progress_orders: employeeStats?.in_progress_orders || 0,
       };
 
       setProfile(profileData);
-      setPendingOrders(pendingRes.data.pendingOrders);
-      setRecentOrders(ordersRes.data.orders.slice(0, 5)); // Show only recent 5 orders
+      setPendingOrders(pendingOrdersData);
+      setRecentOrders(ordersRes.data.data || []); // Use orders from the orders API
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     } finally {
@@ -51,7 +59,9 @@ const EmployeeDashboard = () => {
 
   const handleOrderAction = async (orderId, action) => {
     try {
-      await axios.put(`/orders/${orderId}/manage`, { action });
+      await axios.put(`/orders/${orderId}/manage`, {
+        action: action, // Send 'ACCEPT' or 'REJECT' directly
+      });
 
       // Refresh dashboard data
       fetchDashboardData();
@@ -215,7 +225,9 @@ const EmployeeDashboard = () => {
                         <CalendarIcon className="h-4 w-4" />
                         <span>
                           Ordered:{" "}
-                          {new Date(order.created_at).toLocaleString("en-IN")}
+                          {order.formatted_date ||
+                            order.order_datetime ||
+                            "Unknown date"}
                         </span>
                       </div>
                     </div>
@@ -385,9 +397,12 @@ const EmployeeDashboard = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(
-                        order.updated_at || order.created_at
-                      ).toLocaleDateString()}
+                      {order.formatted_date ||
+                        (order.order_datetime &&
+                          new Date(
+                            order.order_datetime
+                          ).toLocaleDateString()) ||
+                        "Unknown date"}
                     </td>
                   </tr>
                 ))}

@@ -27,9 +27,11 @@ const ServicesManagement = () => {
   const fetchServices = async () => {
     try {
       const response = await axios.get("/services");
-      setServices(response.data.services);
+      console.log("Services response:", response.data);
+      setServices(response.data.data || []);
     } catch (error) {
       console.error("Error fetching services:", error);
+      setServices([]); // Set to empty array on error
     } finally {
       setLoading(false);
     }
@@ -287,11 +289,11 @@ const ServicesManagement = () => {
             Current Services
           </h2>
           <p className="text-sm text-gray-600 mt-1">
-            Total Services: {services.length}
+            Total Services: {services?.length || 0}
           </p>
         </div>
 
-        {services.length === 0 ? (
+        {(services?.length || 0) === 0 ? (
           <div className="text-center py-12">
             <WrenchScrewdriverIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -310,7 +312,7 @@ const ServicesManagement = () => {
           </div>
         ) : (
           <div className="divide-y divide-gray-200">
-            {services.map((service) => (
+            {(services || []).map((service) => (
               <div
                 key={service.service_id}
                 className="p-6 hover:bg-gray-50 transition-colors"

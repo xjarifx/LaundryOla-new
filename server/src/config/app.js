@@ -22,11 +22,11 @@ app.use((req, res, next) => {
 // API routes
 app.use("/api", require("../routes/index"));
 
-// Swagger API docs
-const swaggerUi = require("swagger-ui-express");
-const YAML = require("yamljs");
-const swaggerDocument = YAML.load("./docs/swagger.yaml");
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+// Swagger API docs (temporarily disabled)
+// const swaggerUi = require("swagger-ui-express");
+// const YAML = require("yamljs");
+// const swaggerDocument = YAML.load("./docs/swagger.yaml");
+// app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Error handler
 app.use(require("../middlewares/errorHandler"));

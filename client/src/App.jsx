@@ -21,21 +21,100 @@ import ProtectedRoute from "./components/ProtectedRoute";
 // Configure axios defaults
 axios.defaults.baseURL = "http://localhost:5000/api";
 
+// Add request interceptor to include token in every request
+axios.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor to handle token expiration
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token is invalid or expired
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      delete axios.defaults.headers.common["Authorization"];
+
+      // Update user state if we're in a React component context
+      if (
+        window.location.pathname !== "/login" &&
+        window.location.pathname !== "/"
+      ) {
+        // Only redirect if not already on login/home page
+        window.location.href = "/login";
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const userData = localStorage.getItem("user");
+    const initializeAuth = async () => {
+      const token = localStorage.getItem("token");
+      const userData = localStorage.getItem("user");
 
-    if (token && userData) {
-      const parsedUser = JSON.parse(userData);
-      setUser(parsedUser);
-      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-    }
+      if (token && userData) {
+        try {
+          // Check if userData is actually a string and not "undefined"
+          if (userData === "undefined" || userData === "null") {
+            throw new Error("Invalid user data");
+          }
 
-    setLoading(false);
+          const parsedUser = JSON.parse(userData);
+
+          // Validate that user has required fields
+          if (
+            !parsedUser.role ||
+            (!parsedUser.customer_id && !parsedUser.employee_id)
+          ) {
+            throw new Error("Incomplete user data - missing role or ID");
+          }
+
+          // Set the default Authorization header for axios
+          axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+          // Validate token by making a quick API call
+          try {
+            const endpoint =
+              parsedUser.role === "CUSTOMER"
+                ? "/customers/profile"
+                : "/employees/profile";
+            await axios.get(endpoint);
+
+            // Token is valid, set user state
+            setUser(parsedUser);
+          } catch (apiError) {
+            // Token is invalid or expired
+            throw new Error("Token validation failed");
+          }
+        } catch (error) {
+          console.error("Error initializing authentication:", error);
+          // Clear invalid data
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          delete axios.defaults.headers.common["Authorization"];
+          setUser(null);
+        }
+      }
+
+      setLoading(false);
+    };
+
+    initializeAuth();
   }, []);
 
   const logout = () => {
@@ -43,6 +122,8 @@ function App() {
     localStorage.removeItem("user");
     delete axios.defaults.headers.common["Authorization"];
     setUser(null);
+    // Force navigation to home page
+    window.location.href = "/";
   };
 
   if (loading) {

@@ -51,7 +51,7 @@ const Navbar = ({ user, logout }) => {
             ) : (
               <>
                 {/* User-specific navigation */}
-                {user.role === "CUSTOMER" ? (
+                {user?.role === "CUSTOMER" ? (
                   <div className="flex items-center space-x-4">
                     <Link
                       to="/customer/dashboard"
@@ -118,9 +118,11 @@ const Navbar = ({ user, logout }) => {
                 {/* User info and logout */}
                 <div className="flex items-center space-x-4 border-l border-gray-200 pl-4">
                   <div className="text-sm">
-                    <div className="font-medium text-gray-800">{user.name}</div>
+                    <div className="font-medium text-gray-800">
+                      {user?.name || "User"}
+                    </div>
                     <div className="text-gray-500 capitalize">
-                      {user.role.toLowerCase()}
+                      {user?.role?.toLowerCase() || "user"}
                     </div>
                   </div>
                   <button

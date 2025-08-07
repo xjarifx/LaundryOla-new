@@ -97,7 +97,7 @@ exports.getTransactionsLimited = async (req, res) => {
 exports.getOrders = async (req, res) => {
   try {
     const [result] = await db.query(
-      "SELECT * FROM view_all_orders WHERE customer_id = ? ORDER BY order_date DESC",
+      "SELECT * FROM view_all_orders WHERE customer_id = ? ORDER BY order_datetime DESC",
       [req.user.id]
     );
     res.json(success(result));

@@ -139,15 +139,14 @@ ORDER BY o.order_date DESC;
 
 -- 1. Wallet Balance Update Trigger
 DELIMITER //
-CREATE TRIGGER update_wallet_on_add_money
+CREATE TRIGGER update_wallet_on_transaction
 AFTER INSERT ON Wallet_Transactions
 FOR EACH ROW
 BEGIN
-    IF NEW.transaction_type = 'Add Money' THEN
-        UPDATE Customers 
-        SET wallet_balance = wallet_balance + NEW.amount
-        WHERE customer_id = NEW.customer_id;
-    END IF;
+    -- Update wallet balance for both Add Money (positive) and Payment (negative) transactions
+    UPDATE Customers 
+    SET wallet_balance = wallet_balance + NEW.amount
+    WHERE customer_id = NEW.customer_id;
 END//
 DELIMITER ;
 

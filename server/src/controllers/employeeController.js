@@ -19,8 +19,13 @@ exports.getDashboard = async (req, res) => {
 
 exports.getOrders = async (req, res) => {
   try {
+    // Get orders assigned to this employee from the Orders table
+    // Then join with view to get additional details
     const [result] = await db.query(
-      "SELECT * FROM view_all_orders WHERE employee_id = ?",
+      `SELECT vo.* FROM view_all_orders vo 
+       JOIN Orders o ON vo.order_id = o.order_id 
+       WHERE o.employee_id = ? OR o.employee_id IS NULL
+       ORDER BY vo.order_datetime DESC`,
       [req.user.id]
     );
     res.json(success(result));

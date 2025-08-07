@@ -33,9 +33,14 @@ const CustomerDashboard = () => {
         axios.get("/customers/orders"),
       ]);
 
-      setProfile(profileRes.data.customer);
-      setServices(servicesRes.data.services);
-      setRecentOrders(ordersRes.data.orders.slice(0, 5)); // Show only recent 5 orders
+      console.log("Dashboard API responses:");
+      console.log("Profile:", profileRes.data);
+      console.log("Services:", servicesRes.data);
+      console.log("Orders:", ordersRes.data);
+
+      setProfile(profileRes.data.data);
+      setServices(servicesRes.data.data || []);
+      setRecentOrders((ordersRes.data.data || []).slice(0, 5)); // Show only recent 5 orders
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     } finally {
@@ -168,38 +173,44 @@ const CustomerDashboard = () => {
               Available Services
             </h2>
             <div className="grid md:grid-cols-2 gap-4">
-              {services.map((service) => (
-                <div
-                  key={service.service_id}
-                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-                >
-                  <div className="flex justify-between items-start mb-3">
-                    <h3 className="font-semibold text-gray-900">
-                      {service.service_name}
-                    </h3>
-                    <span className="text-lg font-bold text-blue-600">
-                      ₹{service.price_per_item}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Professional {service.service_name.toLowerCase()} service
-                  </p>
-                  <button
-                    onClick={() => placeOrder(service.service_id)}
-                    disabled={orderLoading}
-                    className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+              {services && services.length > 0 ? (
+                services.map((service) => (
+                  <div
+                    key={service.service_id}
+                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
                   >
-                    {orderLoading ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    ) : (
-                      <>
-                        <PlusIcon className="h-4 w-4" />
-                        <span>Order Now</span>
-                      </>
-                    )}
-                  </button>
+                    <div className="flex justify-between items-start mb-3">
+                      <h3 className="font-semibold text-gray-900">
+                        {service.service_name}
+                      </h3>
+                      <span className="text-lg font-bold text-blue-600">
+                        ₹{service.price_per_item}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Professional {service.service_name.toLowerCase()} service
+                    </p>
+                    <button
+                      onClick={() => placeOrder(service.service_id)}
+                      disabled={orderLoading}
+                      className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                    >
+                      {orderLoading ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      ) : (
+                        <>
+                          <PlusIcon className="h-4 w-4" />
+                          <span>Order Now</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-2 text-center text-gray-500 py-8">
+                  No services available at the moment
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
@@ -280,31 +291,42 @@ const CustomerDashboard = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {recentOrders.map((order) => (
-                  <tr key={order.order_id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {order.service_name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {order.quantity}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ₹{order.total_amount}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                          order.status
-                        )}`}
-                      >
-                        {order.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(order.created_at).toLocaleDateString()}
+                {recentOrders && recentOrders.length > 0 ? (
+                  recentOrders.map((order) => (
+                    <tr key={order.order_id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {order.service_name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {order.quantity}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ₹{order.total_amount}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                            order.status
+                          )}`}
+                        >
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(order.created_at).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan="5"
+                      className="px-6 py-8 text-center text-gray-500"
+                    >
+                      No recent orders found
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
