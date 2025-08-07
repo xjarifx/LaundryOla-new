@@ -40,7 +40,7 @@ const CustomerRegister = () => {
     }
 
     try {
-      const response = await axios.post("/auth/register/customer", {
+      const response = await axios.post("/auth/customers/register", {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,

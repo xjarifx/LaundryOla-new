@@ -39,7 +39,7 @@ const EmployeeRegister = () => {
     }
 
     try {
-      const response = await axios.post("/auth/register/employee", {
+      const response = await axios.post("/auth/employees/register", {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,

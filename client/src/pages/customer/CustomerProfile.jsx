@@ -32,7 +32,7 @@ const CustomerProfile = () => {
   const fetchProfile = async () => {
     try {
       const response = await axios.get("/customers/profile");
-      const profileData = response.data.data;
+      const profileData = response.data.customer;
       setProfile(profileData);
       setFormData({
         name: profileData.name || "",

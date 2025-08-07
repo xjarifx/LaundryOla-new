@@ -30,13 +30,26 @@ const EmployeeProfile = () => {
 
   const fetchProfile = async () => {
     try {
-      const response = await axios.get("/employees/profile");
-      const profileData = response.data.data;
+      const response = await axios.get("/employees/dashboard");
+      const dashboardData = response.data.dashboard;
+      const userData = response.data.user; // Employee user data should be included
+
+      // Use user data for profile information
+      const profileData = {
+        name: userData?.name || "",
+        phone: userData?.phone || "",
+        email: userData?.email || "",
+        earnings_balance: dashboardData?.totalEarnings || 0,
+        total_orders_handled: dashboardData?.totalOrders || 0,
+        completed_orders: dashboardData?.completedOrders || 0,
+        in_progress_orders: dashboardData?.pendingOrders || 0,
+      };
+
       setProfile(profileData);
       setFormData({
-        name: profileData.name || "",
-        phone: profileData.phone || "",
-        email: profileData.email || "",
+        name: profileData.name,
+        phone: profileData.phone,
+        email: profileData.email,
       });
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -50,7 +63,7 @@ const EmployeeProfile = () => {
     setUpdateLoading(true);
 
     try {
-      await axios.put("/employees/profile", formData);
+      await axios.put("/users/profile", formData);
 
       // Refresh profile data
       fetchProfile();

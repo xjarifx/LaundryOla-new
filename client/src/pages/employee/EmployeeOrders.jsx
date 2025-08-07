@@ -29,8 +29,8 @@ const EmployeeOrders = () => {
         axios.get("/orders/pending"),
       ]);
 
-      setOrders(assignedRes.data.data);
-      setPendingOrders(pendingRes.data.data);
+      setOrders(assignedRes.data.orders);
+      setPendingOrders(pendingRes.data.pendingOrders);
     } catch (error) {
       console.error("Error fetching orders:", error);
     } finally {

@@ -27,7 +27,7 @@ const ServicesManagement = () => {
   const fetchServices = async () => {
     try {
       const response = await axios.get("/services");
-      setServices(response.data.data);
+      setServices(response.data.services);
     } catch (error) {
       console.error("Error fetching services:", error);
     } finally {

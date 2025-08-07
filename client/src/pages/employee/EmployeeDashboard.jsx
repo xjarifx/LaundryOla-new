@@ -24,15 +24,24 @@ const EmployeeDashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const [profileRes, pendingRes, ordersRes] = await Promise.all([
-        axios.get("/employees/profile"),
+      const [dashboardRes, pendingRes, ordersRes] = await Promise.all([
+        axios.get("/employees/dashboard"),
         axios.get("/orders/pending"),
         axios.get("/employees/orders"),
       ]);
 
-      setProfile(profileRes.data.data);
-      setPendingOrders(pendingRes.data.data);
-      setRecentOrders(ordersRes.data.data.slice(0, 5)); // Show only recent 5 orders
+      // Extract profile data from dashboard response and create a profile-like structure
+      const dashboardData = dashboardRes.data.dashboard;
+      const profileData = {
+        earnings_balance: dashboardData.totalEarnings || 0,
+        total_orders_handled: dashboardData.totalOrders || 0,
+        completed_orders: dashboardData.completedOrders || 0,
+        in_progress_orders: dashboardData.pendingOrders || 0,
+      };
+
+      setProfile(profileData);
+      setPendingOrders(pendingRes.data.pendingOrders);
+      setRecentOrders(ordersRes.data.orders.slice(0, 5)); // Show only recent 5 orders
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     } finally {

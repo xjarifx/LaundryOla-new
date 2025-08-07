@@ -33,9 +33,9 @@ const CustomerDashboard = () => {
         axios.get("/customers/orders"),
       ]);
 
-      setProfile(profileRes.data.data);
-      setServices(servicesRes.data.data);
-      setRecentOrders(ordersRes.data.data.slice(0, 5)); // Show only recent 5 orders
+      setProfile(profileRes.data.customer);
+      setServices(servicesRes.data.services);
+      setRecentOrders(ordersRes.data.orders.slice(0, 5)); // Show only recent 5 orders
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     } finally {

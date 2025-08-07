@@ -29,8 +29,8 @@ const CustomerWallet = () => {
         axios.get("/customers/transactions"),
       ]);
 
-      setProfile(profileRes.data.data);
-      setTransactions(transactionsRes.data.data);
+      setProfile(profileRes.data.customer);
+      setTransactions(transactionsRes.data.transactions);
     } catch (error) {
       console.error("Error fetching wallet data:", error);
     } finally {

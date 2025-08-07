@@ -20,28 +20,38 @@ const Login = ({ setUser }) => {
     setError("");
 
     try {
-      const endpoint = `/auth/login/${formData.userType}`;
+      const endpoint = `/auth/${formData.userType}s/login`;
       const response = await axios.post(endpoint, {
         email: formData.email,
         password: formData.password,
       });
 
       if (response.data.success) {
-        const { token, user } = response.data.data;
+        const { token } = response.data;
+        const userData =
+          formData.userType === "customer"
+            ? response.data.customer
+            : response.data.employee;
 
         // Store token and user data
         localStorage.setItem("token", token);
-        localStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem("user", JSON.stringify(userData));
 
         // Set axios default header
         axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
+        // Add role to user data for navigation
+        const userWithRole = {
+          ...userData,
+          role: formData.userType.toUpperCase(),
+        };
+
         // Update user state
-        setUser(user);
+        setUser(userWithRole);
 
         // Redirect based on user type
         const redirectPath =
-          user.role === "CUSTOMER"
+          userWithRole.role === "CUSTOMER"
             ? "/customer/dashboard"
             : "/employee/dashboard";
         navigate(redirectPath);
