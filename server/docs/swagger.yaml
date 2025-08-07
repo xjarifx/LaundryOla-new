@@ -1,0 +1,67 @@
+openapi: 3.0.0
+info:
+  title: LaundryOla API
+  version: 1.0.0
+  description: API documentation for LaundryOla backend
+servers:
+  - url: /api
+paths:
+  /customers/register:
+    post:
+      summary: Register a new customer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                phone:
+                  type: string
+                address:
+                  type: string
+      responses:
+        "200":
+          description: Customer registered
+  /customers/{id}/profile:
+    get:
+      summary: Get customer profile
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Customer profile
+  /customers/{id}/dashboard:
+    get:
+      summary: Get customer dashboard
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Customer dashboard
+  /customers/{id/wallet/add}:
+    post:
+      summary: Add money to wallet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: number
+      responses:
+        "200":
+          description: Money added
+# ... More endpoints to be added for full coverage
