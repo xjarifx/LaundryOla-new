@@ -24,7 +24,7 @@ router.put(
   "/profile",
   authenticateToken,
   requireEmployee,
-  validate(employeeValidator.employeeRegister),
+  validate(employeeValidator.employeeProfileUpdate),
   employeeController.updateProfile
 );
 router.get(

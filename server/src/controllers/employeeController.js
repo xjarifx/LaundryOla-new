@@ -3,7 +3,7 @@ const { success, error } = require("../utils/response");
 
 exports.getDashboard = async (req, res) => {
   try {
-    const [result] = await db.query('CALL sp_get_dashboard("EMPLOYEE", ?)', [
+    const [result] = await db.query("CALL sp_get_dashboard('EMPLOYEE', ?)", [
       req.user.id,
     ]);
     res.json({
@@ -30,11 +30,11 @@ exports.getOrders = async (req, res) => {
 };
 
 exports.updateProfile = async (req, res) => {
-  const { name, phone } = req.body;
+  const { name, phone, email } = req.body;
   try {
     const [result] = await db.query(
-      "CALL sp_update_employee_profile(?, ?, ?)",
-      [req.user.id, name, phone]
+      "CALL sp_update_employee_profile(?, ?, ?, ?)",
+      [req.user.id, name, phone, email]
     );
     res.json(success(result[0][0], "Profile updated successfully"));
   } catch (err) {

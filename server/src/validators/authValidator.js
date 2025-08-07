@@ -24,3 +24,10 @@ exports.employeeLogin = Joi.object({
   email: Joi.string().email().required(),
   password: Joi.string().min(8).max(100).required(),
 });
+
+// Employee profile update (no password required)
+exports.employeeProfileUpdate = Joi.object({
+  name: Joi.string().min(2).max(50).required(),
+  phone: Joi.string().min(10).max(15).required(),
+  email: Joi.string().email().required(),
+});
