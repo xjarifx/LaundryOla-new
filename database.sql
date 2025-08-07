@@ -446,3 +446,80 @@ BEGIN
     END IF;
 END//
 DELIMITER ;
+
+-- 9. Manage Services
+DELIMITER //
+CREATE PROCEDURE sp_manage_service(
+    IN p_action VARCHAR(20),
+    IN p_service_id INT,
+    IN p_service_name VARCHAR(50),
+    IN p_price_per_item DECIMAL(6,2)
+)
+BEGIN
+    IF p_action = 'CREATE' THEN
+        IF p_service_name IS NULL OR p_price_per_item IS NULL THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Service name and price are required';
+        END IF;
+        
+        IF p_price_per_item <= 0 THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Price must be positive';
+        END IF;
+        
+        -- Check if service name already exists
+        IF EXISTS (SELECT 1 FROM Services WHERE service_name = p_service_name) THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Service name already exists';
+        END IF;
+        
+        INSERT INTO Services (service_name, price_per_item)
+        VALUES (p_service_name, p_price_per_item);
+        
+        SELECT CONCAT('Service "', p_service_name, '" created successfully') as message,
+               LAST_INSERT_ID() as service_id;
+        
+    ELSEIF p_action = 'UPDATE' THEN
+        IF p_service_id IS NULL THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Service ID is required for update';
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM Services WHERE service_id = p_service_id) THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Service not found';
+        END IF;
+        
+        -- Check if new service name already exists (excluding current service)
+        IF p_service_name IS NOT NULL AND EXISTS (
+            SELECT 1 FROM Services 
+            WHERE service_name = p_service_name AND service_id != p_service_id
+        ) THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Service name already exists';
+        END IF;
+        
+        UPDATE Services 
+        SET 
+            service_name = COALESCE(p_service_name, service_name),
+            price_per_item = COALESCE(p_price_per_item, price_per_item)
+        WHERE service_id = p_service_id;
+        
+        SELECT CONCAT('Service updated successfully') as message;
+        
+    ELSEIF p_action = 'DELETE' THEN
+        IF p_service_id IS NULL THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Service ID is required for delete';
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM Services WHERE service_id = p_service_id) THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Service not found';
+        END IF;
+        
+        -- Check if service is used in any orders
+        IF EXISTS (SELECT 1 FROM Orders WHERE service_id = p_service_id) THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cannot delete service that has orders';
+        END IF;
+        
+        DELETE FROM Services WHERE service_id = p_service_id;
+        
+        SELECT CONCAT('Service deleted successfully') as message;
+    ELSE
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Invalid action. Use CREATE, UPDATE, or DELETE';
+    END IF;
+END//
+DELIMITER ;
