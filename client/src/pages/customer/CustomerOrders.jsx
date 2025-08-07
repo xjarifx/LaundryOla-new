@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import {
   ClipboardDocumentListIcon,
   FunnelIcon,
@@ -22,7 +22,7 @@ const CustomerOrders = () => {
 
   const fetchOrders = async () => {
     try {
-      const response = await axios.get("/customers/orders");
+      const response = await api.get("/customers/orders");
       console.log("Customer orders response:", response.data);
       setOrders(response.data.data || []);
     } catch (error) {

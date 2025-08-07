@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import axios from "axios";
+import api from "../../utils/api";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import {
   validateCustomerRegistration,
@@ -45,7 +45,7 @@ const CustomerRegister = () => {
     }
 
     try {
-      const response = await axios.post("/auth/customers/register", {
+      const response = await api.post("/auth/customers/register", {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,

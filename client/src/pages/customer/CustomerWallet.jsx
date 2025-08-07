@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import {
   WalletIcon,
   PlusIcon,
@@ -26,8 +26,8 @@ const CustomerWallet = () => {
   const fetchWalletData = async () => {
     try {
       const [profileRes, transactionsRes] = await Promise.all([
-        axios.get("/customers/profile"),
-        axios.get("/customers/transactions"),
+        api.get("/customers/profile"),
+        api.get("/customers/transactions"),
       ]);
 
       console.log("Profile API response:", profileRes.data);
@@ -53,7 +53,7 @@ const CustomerWallet = () => {
   const clearAuthAndReload = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    delete axios.defaults.headers.common["Authorization"];
+    // Token cleanup is handled by api interceptors
     window.location.href = "/login";
   };
 
@@ -101,7 +101,7 @@ const CustomerWallet = () => {
           : "Invalid token"
       );
 
-      const response = await axios.post(
+      const response = await api.post(
         "/customers/wallet/add",
         {
           amount: parsedAmount,

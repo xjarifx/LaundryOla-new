@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import axios from "axios";
+import api from "../../utils/api";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { validateLogin, validateEmail } from "../../utils/validation";
 
@@ -32,7 +32,7 @@ const Login = ({ setUser }) => {
 
     try {
       const endpoint = `/auth/${formData.userType}s/login`;
-      const response = await axios.post(endpoint, {
+      const response = await api.post(endpoint, {
         email: formData.email,
         password: formData.password,
       });
@@ -72,7 +72,8 @@ const Login = ({ setUser }) => {
         localStorage.setItem("user", JSON.stringify(userWithRole));
 
         // Set axios default header
-        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+        // Token is automatically handled by api interceptors
+        // No need to manually set axios headers
 
         // Update user state
         setUser(userWithRole);

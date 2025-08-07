@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import {
   WrenchScrewdriverIcon,
   PlusIcon,
@@ -26,7 +26,7 @@ const ServicesManagement = () => {
 
   const fetchServices = async () => {
     try {
-      const response = await axios.get("/services");
+      const response = await api.get("/services");
       console.log("Services response:", response.data);
       setServices(response.data.data || []);
     } catch (error) {
@@ -40,7 +40,7 @@ const ServicesManagement = () => {
   const handleAddService = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("/services", {
+      await api.post("/services", {
         service_name: formData.service_name,
         price: parseFloat(formData.price),
       });
@@ -58,7 +58,7 @@ const ServicesManagement = () => {
   const handleUpdateService = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`/services/${editingService.service_id}`, {
+      await api.put(`/services/${editingService.service_id}`, {
         service_name: formData.service_name,
         price: parseFloat(formData.price),
       });
@@ -80,7 +80,7 @@ const ServicesManagement = () => {
       )
     ) {
       try {
-        await axios.delete(`/services/${serviceId}`);
+        await api.delete(`/services/${serviceId}`);
         fetchServices();
         alert("Service deleted successfully!");
       } catch (error) {

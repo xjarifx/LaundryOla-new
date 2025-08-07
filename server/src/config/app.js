@@ -6,7 +6,18 @@ require("dotenv").config();
 
 const app = express();
 
-app.use(cors());
+// Configure CORS with specific origins
+const corsOptions = {
+  origin: [
+    process.env.CLIENT_URL || "https://laundry-ola-new.vercel.app",
+    "http://localhost:5173", // Keep for local development
+    "https://laundry-ola-new.vercel.app", // Production frontend
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
 app.use(helmet());
 app.use(morgan("dev"));
 

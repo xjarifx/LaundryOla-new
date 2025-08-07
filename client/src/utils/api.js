@@ -1,8 +1,13 @@
 import axios from "axios";
 
+// Get API base URL from environment variables
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://laundryola-new.onrender.com/api";
+
 // Create axios instance with default config
 const api = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: API_BASE_URL,
   timeout: 10000,
 });
 

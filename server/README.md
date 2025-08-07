@@ -10,6 +10,16 @@ A production-ready Node.js Express backend for the LaundryOla service, fully int
 - Comprehensive error handling
 - API documentation (Swagger)
 - Full test suite
+- Production-ready with hosted URLs
+
+## Host Configuration
+
+The project uses hosted URLs defined in `hostURL.txt`:
+
+- **Frontend**: https://laundry-ola-new.vercel.app
+- **Backend API**: https://laundryola-new.onrender.com
+
+To change host URLs, update `hostURL.txt` and the corresponding environment variables. See `HOST-CONFIGURATION.md` for detailed instructions.
 
 ## Setup Instructions
 

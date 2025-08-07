@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
-import axios from "axios";
+import api from "../../utils/api";
 import {
   WalletIcon,
   ShoppingBagIcon,
@@ -29,9 +29,9 @@ const CustomerDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       const [profileRes, servicesRes, ordersRes] = await Promise.all([
-        axios.get("/customers/profile"),
-        axios.get("/services"),
-        axios.get("/customers/orders"),
+        api.get("/customers/profile"),
+        api.get("/services"),
+        api.get("/customers/orders"),
       ]);
 
       console.log("Dashboard API responses:");
@@ -52,7 +52,7 @@ const CustomerDashboard = () => {
   const placeOrder = async (serviceId, quantity = 1) => {
     setOrderLoading(true);
     try {
-      await axios.post("/orders", {
+      await api.post("/orders", {
         service_id: serviceId,
         quantity,
       });

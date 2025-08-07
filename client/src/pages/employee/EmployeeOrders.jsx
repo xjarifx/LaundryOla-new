@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import {
   ClipboardDocumentListIcon,
   FunnelIcon,
@@ -26,8 +26,8 @@ const EmployeeOrders = () => {
   const fetchOrders = async () => {
     try {
       const [assignedRes, pendingRes] = await Promise.all([
-        axios.get("/employees/orders"),
-        axios.get("/orders/pending"),
+        api.get("/employees/orders"),
+        api.get("/orders/pending"),
       ]);
 
       console.log("Assigned orders response:", assignedRes.data);
@@ -47,7 +47,7 @@ const EmployeeOrders = () => {
 
   const handleOrderAction = async (orderId, action) => {
     try {
-      await axios.put(`/orders/${orderId}/manage`, { action });
+      await api.put(`/orders/${orderId}/manage`, { action });
 
       // Refresh orders data
       fetchOrders();

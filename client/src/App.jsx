@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router";
 import { useState, useEffect } from "react";
-import axios from "axios";
+import api from "./utils/api"; // Use our centralized API instance
 
 // Components
 import Navbar from "./components/Navbar";
@@ -18,45 +18,8 @@ import EmployeeProfile from "./pages/employee/EmployeeProfile";
 import ServicesManagement from "./pages/employee/ServicesManagement";
 import ProtectedRoute from "./components/ProtectedRoute";
 
-// Configure axios defaults
-axios.defaults.baseURL = "http://localhost:5000/api";
-
-// Add request interceptor to include token in every request
-axios.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Add response interceptor to handle token expiration
-axios.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Token is invalid or expired
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      delete axios.defaults.headers.common["Authorization"];
-
-      // Update user state if we're in a React component context
-      if (
-        window.location.pathname !== "/login" &&
-        window.location.pathname !== "/"
-      ) {
-        // Only redirect if not already on login/home page
-        window.location.href = "/login";
-      }
-    }
-    return Promise.reject(error);
-  }
-);
+// Note: API configuration is now handled in src/utils/api.js
+// This includes baseURL from environment variables and all interceptors
 
 function App() {
   const [user, setUser] = useState(null);
@@ -84,8 +47,8 @@ function App() {
             throw new Error("Incomplete user data - missing role or ID");
           }
 
-          // Set the default Authorization header for axios
-          axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+          // Set the default Authorization header for our API instance
+          // Note: This is already handled by the api interceptors, but keeping for compatibility
 
           // Validate token by making a quick API call
           try {
@@ -93,7 +56,7 @@ function App() {
               parsedUser.role === "CUSTOMER"
                 ? "/customers/profile"
                 : "/employees/profile";
-            await axios.get(endpoint);
+            await api.get(endpoint);
 
             // Token is valid, set user state
             setUser(parsedUser);
@@ -106,7 +69,7 @@ function App() {
           // Clear invalid data
           localStorage.removeItem("token");
           localStorage.removeItem("user");
-          delete axios.defaults.headers.common["Authorization"];
+          // Note: Token clearing is handled by api interceptors
           setUser(null);
         }
       }
@@ -120,7 +83,7 @@ function App() {
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    delete axios.defaults.headers.common["Authorization"];
+    // Note: Token clearing is handled by api interceptors
     setUser(null);
     // Force navigation to home page
     window.location.href = "/";

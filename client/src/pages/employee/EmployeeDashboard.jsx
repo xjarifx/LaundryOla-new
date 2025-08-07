@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
-import axios from "axios";
+import api from "../../utils/api";
 import {
   CurrencyRupeeIcon,
   ClipboardDocumentListIcon,
@@ -26,8 +26,8 @@ const EmployeeDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       const [dashboardRes, ordersRes] = await Promise.all([
-        axios.get("/employees/dashboard"),
-        axios.get("/employees/orders"),
+        api.get("/employees/dashboard"),
+        api.get("/employees/orders"),
       ]);
 
       console.log("Dashboard response:", dashboardRes.data);
@@ -60,7 +60,7 @@ const EmployeeDashboard = () => {
 
   const handleOrderAction = async (orderId, action) => {
     try {
-      await axios.put(`/orders/${orderId}/manage`, {
+      await api.put(`/orders/${orderId}/manage`, {
         action: action, // Send 'ACCEPT' or 'REJECT' directly
       });
 

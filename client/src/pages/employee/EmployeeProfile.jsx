@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import {
   UserIcon,
   EnvelopeIcon,
@@ -36,7 +36,7 @@ const EmployeeProfile = () => {
 
   const fetchProfile = async () => {
     try {
-      const response = await axios.get("/employees/profile");
+      const response = await api.get("/employees/profile");
       console.log("Employee profile response:", response.data); // Debug log
 
       // Backend returns { success: true, data: profileData }
@@ -86,7 +86,7 @@ const EmployeeProfile = () => {
 
     try {
       console.log("Updating employee profile with data:", formData); // Debug log
-      const response = await axios.put("/employees/profile", formData);
+      const response = await api.put("/employees/profile", formData);
       console.log("Update response:", response.data); // Debug log
 
       // Refresh profile data
