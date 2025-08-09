@@ -1,3 +1,5 @@
+https://neon-cut-6bf.notion.site/env-crt-22de526928ab8099a866e4853854e8ad?source=copy_link
+
 # LaundryOla - Complete Laundry Service Management System
 
 ## Project Overview
