@@ -505,7 +505,7 @@ BEGIN
     ORDER BY order_date DESC LIMIT 10;
 
   ELSEIF p_user_type = 'EMPLOYEE' THEN
-    SELECT 
+    SELECT
       e.employee_id,
       e.name,
       e.earnings_balance,
@@ -518,11 +518,11 @@ BEGIN
     WHERE e.employee_id = p_user_id
     GROUP BY e.employee_id, e.name, e.earnings_balance;
 
-    SELECT * FROM view_all_orders 
-    WHERE status = 'Pending' 
+    SELECT * FROM view_all_orders
+    WHERE status = 'Pending'
     ORDER BY order_date ASC LIMIT 10;
 
-    SELECT * FROM view_all_orders 
+    SELECT * FROM view_all_orders
     WHERE employee_name = (SELECT name FROM Employees WHERE employee_id = p_user_id)
     AND status = 'Accepted'
     ORDER BY order_date DESC;
@@ -612,13 +612,13 @@ BEGIN
       SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Service not found';
     END IF;
     IF p_service_name IS NOT NULL AND EXISTS (
-      SELECT 1 FROM Services 
+      SELECT 1 FROM Services
       WHERE service_name = p_service_name AND service_id != p_service_id
     ) THEN
       SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Service name already exists';
     END IF;
-    UPDATE Services 
-    SET 
+    UPDATE Services
+    SET
       service_name = COALESCE(p_service_name, service_name),
       price_per_item = COALESCE(p_price_per_item, price_per_item)
     WHERE service_id = p_service_id;
