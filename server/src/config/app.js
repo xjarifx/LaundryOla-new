@@ -6,31 +6,49 @@ require("dotenv").config();
 
 const app = express();
 
-// Configure CORS with specific origins and proper preflight handling
+// Configure CORS with specific origins and robust preflight handling
 const allowedOrigins = [
   process.env.CLIENT_URL || "https://laundry-ola-new.vercel.app",
   "http://localhost:5173",
   "https://laundry-ola-new.vercel.app",
 ];
 
-const corsOptions = {
-  origin: (origin, callback) => {
-    // Allow non-browser clients (no origin) and allowed origins
-    if (!origin || allowedOrigins.includes(origin)) {
-      return callback(null, true);
+// Manual CORS shim to ensure headers are present even on errors and 404s
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+    res.header("Vary", "Origin");
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header(
+      "Access-Control-Allow-Methods",
+      "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+    );
+    // Reflect requested headers or fall back to common ones
+    const reqHeaders = req.headers["access-control-request-headers"];
+    res.header(
+      "Access-Control-Allow-Headers",
+      reqHeaders || "Content-Type, Authorization"
+    );
+    if (req.method === "OPTIONS") {
+      return res.sendStatus(204);
     }
-    return callback(new Error("Not allowed by CORS"));
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  optionsSuccessStatus: 204,
-};
+  }
+  next();
+});
 
-app.use(cors(corsOptions));
-// Explicitly enable preflight across-the-board
-app.options("*", cors(corsOptions));
-// And ensure /api/* preflight specifically responds
-app.options("/api/*", cors(corsOptions));
+// Keep cors() with permissive reflection to cover non-browser clients; our shim enforces allowlist
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+  })
+);
 app.use(helmet());
 app.use(morgan("dev"));
 
