@@ -6,18 +6,31 @@ require("dotenv").config();
 
 const app = express();
 
-// Configure CORS with specific origins
+// Configure CORS with specific origins and proper preflight handling
+const allowedOrigins = [
+  process.env.CLIENT_URL || "https://laundry-ola-new.vercel.app",
+  "http://localhost:5173",
+  "https://laundry-ola-new.vercel.app",
+];
+
 const corsOptions = {
-  origin: [
-    process.env.CLIENT_URL || "https://laundry-ola-new.vercel.app",
-    "http://localhost:5173", // Keep for local development
-    "https://laundry-ola-new.vercel.app", // Production frontend
-  ],
+  origin: (origin, callback) => {
+    // Allow non-browser clients (no origin) and allowed origins
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error("Not allowed by CORS"));
+  },
   credentials: true,
-  optionsSuccessStatus: 200,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  exposedHeaders: ["Content-Length"],
+  optionsSuccessStatus: 204,
 };
 
 app.use(cors(corsOptions));
+// Explicitly enable preflight across-the-board
+app.options("*", cors(corsOptions));
 app.use(helmet());
 app.use(morgan("dev"));
 
