@@ -23,14 +23,14 @@ const corsOptions = {
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  exposedHeaders: ["Content-Length"],
   optionsSuccessStatus: 204,
 };
 
 app.use(cors(corsOptions));
 // Explicitly enable preflight across-the-board
 app.options("*", cors(corsOptions));
+// And ensure /api/* preflight specifically responds
+app.options("/api/*", cors(corsOptions));
 app.use(helmet());
 app.use(morgan("dev"));
 
