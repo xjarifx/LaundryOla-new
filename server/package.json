@@ -1,7 +1,7 @@
 {
   "name": "laundryola-backend",
   "version": "1.0.0",
-  "description": "Production-ready backend for LaundryOla service",
+  "description": "Local development backend for LaundryOla service",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",

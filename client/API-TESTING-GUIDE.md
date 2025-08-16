@@ -14,7 +14,7 @@
 
 ## Base Configuration
 
-**Base URL:** `https://laundryola-new.onrender.com/api`
+**Base URL:** `http://localhost:5000/api`
 
 ### Environment Variables for Testing
 

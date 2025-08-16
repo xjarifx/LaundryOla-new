@@ -6,47 +6,12 @@ require("dotenv").config();
 
 const app = express();
 
-// Configure CORS with specific origins and robust preflight handling
-const allowedOrigins = [
-  process.env.CLIENT_URL || "https://laundry-ola-new.vercel.app",
-  "http://localhost:5173",
-  "https://laundry-ola-new.vercel.app",
-];
-
-// Manual CORS shim to ensure headers are present even on errors and 404s
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (origin && allowedOrigins.includes(origin)) {
-    res.header("Access-Control-Allow-Origin", origin);
-    res.header("Vary", "Origin");
-    res.header("Access-Control-Allow-Credentials", "true");
-    res.header(
-      "Access-Control-Allow-Methods",
-      "GET,POST,PUT,PATCH,DELETE,OPTIONS"
-    );
-    // Reflect requested headers or fall back to common ones
-    const reqHeaders = req.headers["access-control-request-headers"];
-    res.header(
-      "Access-Control-Allow-Headers",
-      reqHeaders || "Content-Type, Authorization"
-    );
-    if (req.method === "OPTIONS") {
-      return res.sendStatus(204);
-    }
-  }
-  next();
-});
-
-// Keep cors() with permissive reflection to cover non-browser clients; our shim enforces allowlist
+// Simple CORS configuration for local development
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      return callback(new Error("Not allowed by CORS"));
-    },
+    origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   })
 );
 app.use(helmet());

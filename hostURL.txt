@@ -1,2 +1,0 @@
-CLIENT_URL=https://laundry-ola-new.vercel.app
-SERVER_URL=https://laundryola-new.onrender.com

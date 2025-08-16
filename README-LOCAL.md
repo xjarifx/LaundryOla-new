@@ -86,6 +86,7 @@ Frontend will run on: `http://localhost:5173`
 ### Environment Variables
 
 #### Backend (.env)
+
 ```bash
 # Database Configuration
 DB_HOST=localhost
@@ -104,6 +105,7 @@ NODE_ENV=development
 ```
 
 #### Frontend (.env)
+
 ```bash
 # API Configuration
 VITE_API_BASE_URL=http://localhost:5000/api
@@ -113,6 +115,7 @@ VITE_ENV=development
 ### Development Commands
 
 #### Backend Commands
+
 ```bash
 npm run dev          # Start with nodemon (auto-restart)
 npm start           # Start production server
@@ -121,6 +124,7 @@ npm run lint        # Check code style
 ```
 
 #### Frontend Commands
+
 ```bash
 npm run dev         # Start development server
 npm run build       # Build for production
@@ -132,6 +136,7 @@ npm run lint        # Check code style
 ## 🗄️ Database Features
 
 ### Tables
+
 - **Customers**: User accounts with wallet balances
 - **Employees**: Staff accounts with earnings tracking
 - **Services**: Available laundry services and pricing
@@ -140,6 +145,7 @@ npm run lint        # Check code style
 - **Employee_Earnings**: Earnings and commission tracking
 
 ### Stored Procedures
+
 - `sp_register_customer` - Customer registration
 - `sp_register_employee` - Employee registration
 - `sp_customer_login` - Customer authentication
@@ -150,6 +156,7 @@ npm run lint        # Check code style
 - `sp_get_dashboard` - Dashboard data
 
 ### Database Views
+
 - `view_customer_complete` - Complete customer profiles
 - `view_available_services` - Service catalog
 - `view_all_orders` - Order details with relationships
@@ -158,11 +165,13 @@ npm run lint        # Check code style
 ## 🔐 Authentication
 
 ### Customer Flow
+
 1. Register: `POST /api/auth/customers/register`
 2. Login: `POST /api/auth/customers/login`
 3. Access protected routes with JWT token
 
 ### Employee Flow
+
 1. Register: `POST /api/auth/employees/register`
 2. Login: `POST /api/auth/employees/login`
 3. Access protected routes with JWT token
@@ -170,6 +179,7 @@ npm run lint        # Check code style
 ## 📡 API Endpoints
 
 ### Authentication
+
 - `POST /api/auth/customers/register` - Customer registration
 - `POST /api/auth/customers/login` - Customer login
 - `POST /api/auth/employees/register` - Employee registration
@@ -177,6 +187,7 @@ npm run lint        # Check code style
 - `POST /api/auth/logout` - Logout
 
 ### Customer Management
+
 - `GET /api/customers/profile` - Get profile
 - `PUT /api/customers/profile` - Update profile
 - `GET /api/customers/dashboard` - Dashboard data
@@ -186,18 +197,21 @@ npm run lint        # Check code style
 - `GET /api/customers/orders` - Order history
 
 ### Order Management
+
 - `POST /api/orders` - Place new order
 - `GET /api/orders/:id` - Get single order
 - `GET /api/orders/pending` - Get pending orders (employee)
 - `PUT /api/orders/:id/manage` - Manage order status (employee)
 
 ### Service Management
+
 - `GET /api/services` - List all services
 - `POST /api/services` - Create service (employee)
 - `PUT /api/services/:id` - Update service (employee)
 - `DELETE /api/services/:id` - Delete service (employee)
 
 ### Employee Management
+
 - `GET /api/employees/dashboard` - Dashboard data
 - `GET /api/employees/orders` - Assigned orders
 - `PUT /api/employees/profile` - Update profile
@@ -206,6 +220,7 @@ npm run lint        # Check code style
 ## 🧪 Testing
 
 ### Manual Testing
+
 Use the provided test data and API testing guide:
 
 ```bash
@@ -222,6 +237,7 @@ curl -X POST http://localhost:5000/api/auth/customers/register \
 ```
 
 ### Automated Testing
+
 ```bash
 cd server
 npm test
@@ -230,6 +246,7 @@ npm test
 ## 🔧 Development Tools
 
 ### Recommended VS Code Extensions
+
 - ES7+ React/Redux/React-Native snippets
 - Prettier - Code formatter
 - ESLint
@@ -237,11 +254,13 @@ npm test
 - REST Client
 
 ### Database Management
+
 - MySQL Workbench
 - phpMyAdmin
 - Sequel Pro (macOS)
 
 ### API Testing
+
 - Postman
 - Insomnia
 - Thunder Client (VS Code)
@@ -249,6 +268,7 @@ npm test
 ## 📊 Features
 
 ### Customer Portal
+
 - User registration and authentication
 - Digital wallet management
 - Order placement and tracking
@@ -256,6 +276,7 @@ npm test
 - Profile management
 
 ### Employee Dashboard
+
 - Order queue management
 - Earnings tracking
 - Customer service tools
@@ -263,6 +284,7 @@ npm test
 - Profile management
 
 ### Admin Features
+
 - Service creation and pricing
 - Order status management
 - Employee earnings tracking
@@ -273,6 +295,7 @@ npm test
 ### Common Issues
 
 #### Database Connection Error
+
 ```bash
 # Check MySQL service
 sudo systemctl status mysql
@@ -284,6 +307,7 @@ DB_PASSWORD=your_password
 ```
 
 #### Port Already in Use
+
 ```bash
 # Kill process on port 5000
 npx kill-port 5000
@@ -293,6 +317,7 @@ PORT=5001 npm run dev
 ```
 
 #### CORS Issues
+
 ```bash
 # Frontend and backend running on different ports is expected
 # Frontend: http://localhost:5173
@@ -300,6 +325,7 @@ PORT=5001 npm run dev
 ```
 
 #### JWT Token Issues
+
 ```bash
 # Ensure JWT_SECRET is set in backend .env
 JWT_SECRET=your_super_secret_key_here
